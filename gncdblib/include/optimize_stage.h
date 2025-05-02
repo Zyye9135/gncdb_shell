@@ -2,6 +2,6 @@
 #define OPTIMIZE_STAGE_H
 typedef struct LogicalOperator LogicalOperator;
 #include "sql_event.h"
-int OptimizeStageHandleRequest(SQLStageEvent* sqlEvent);
-int ruleBasedOptimization(LogicalOperator* logicalOperator);
-#endif // OPTIMIZE_STAGE_H
+int OptimizeStageHandleRequest(SQLStageEvent *sqlEvent);
+int ruleBasedOptimization(LogicalOperator *logicalOperator);
+#endif  // OPTIMIZE_STAGE_H

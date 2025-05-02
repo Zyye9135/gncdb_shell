@@ -38,13 +38,16 @@
 #ifndef YY_YY_YACC_SQL_H_INCLUDED
 # define YY_YY_YACC_SQL_H_INCLUDED
 /* Debug traces.  */
-#include "parse_defs.h"
 #ifndef YYDEBUG
 # define YYDEBUG 1
 #endif
 #if YYDEBUG
 extern int yydebug;
 #endif
+/* "%code requires" blocks.  */
+
+#include "parse_defs.h" // 这里是为了在生成的.h文件包含一些所需的头文件
+
 
 /* Token kinds.  */
 #ifndef YYTOKENTYPE
@@ -141,7 +144,6 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 178 "yacc_sql.y"
 
   ParsedSqlNode *                   sqlNode;
   Value *                           value;
@@ -168,7 +170,6 @@ union YYSTYPE
   UpdateKV*                         updateKv;
   varArrayList*                     updateKvList;
 
-#line 171 "yacc_sql.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

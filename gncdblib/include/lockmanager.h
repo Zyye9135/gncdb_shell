@@ -9,13 +9,13 @@
 #ifndef _LOCKMANAGE_H_
 #define _LOCKMANAGE_H_
 
-#include "gncdbConstant.h"
-#include "HashMap.h"
-#include "varArrayList.h"
-#include "typeDefine.h"
+#include "gncdbconstant.h"
+#include "hashmap.h"
+#include "vararraylist.h"
+#include "typedefine.h"
 // #include "transaction.h"
-#include "readwriteLock.h"
-#include "condVariable.h"
+#include "readwritelock.h"
+#include "condvariable.h"
 struct Transaction;
 
 /* 一个锁结构 */

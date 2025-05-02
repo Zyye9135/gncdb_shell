@@ -9,9 +9,9 @@
 #ifndef _QUERYPLAN_H_
 #define _QUERYPLAN_H_
 
-#include "btreeCursor.h"
-#include "gncdbConstant.h"
-#include "typeDefine.h"
+#include "btreecursor.h"
+#include "gncdbconstant.h"
+#include "typedefine.h"
 #include "tuple.h"
 #include "operator.h"
 

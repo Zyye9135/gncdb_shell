@@ -14,9 +14,9 @@
 
 #include<stdbool.h>
 #include "btreetable.h"
-#include"gncdbConstant.h"
-#include"varArrayList.h"
-#include"typeDefine.h"
+#include"gncdbconstant.h"
+#include"vararraylist.h"
+#include"typedefine.h"
 #include"field.h"
 #include"catalog.h"
 #include "tuple_cell.h"

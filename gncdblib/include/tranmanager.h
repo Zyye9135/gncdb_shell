@@ -12,7 +12,7 @@
 
 #include "gncdb.h"
 #include "lockmanager.h"
-#include "logger.h"
+#include "redologger.h"
 
 
  /* 事务管理器 */

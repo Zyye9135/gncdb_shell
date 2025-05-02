@@ -1,7 +1,8 @@
 #ifndef STMT_H
 #define STMT_H
 #include "sql_event.h"
-typedef enum StmtType {
+typedef enum StmtType
+{
   ST_CALC,
   ST_SELECT,
   ST_INSERT,
@@ -27,14 +28,14 @@ typedef enum StmtType {
   ST_GROUP_BY,
   ST_ORDER_BY,
   ST_LIMIT,
-}StmtType;
+} StmtType;
 
 typedef struct Stmt
 {
   StmtType type;
-}Stmt;
+} Stmt;
 
-int StmtConstruct(SQLStageEvent *sqlEvent, Stmt **stmt);
+int  StmtConstruct(SQLStageEvent *sqlEvent, Stmt **stmt);
 void StmtDestroy(Stmt *stmt);
 
 #endif /* STMT_H */

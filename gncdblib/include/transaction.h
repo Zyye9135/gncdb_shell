@@ -9,10 +9,10 @@
 #ifndef _TRANSACTION_H_
 #define _TRANSACTION_H_
 
-#include "gncdbConstant.h"
-#include "typeDefine.h"
+#include "gncdbconstant.h"
+#include "typedefine.h"
 #include "gncdb.h"
-#include "varArrayList.h"
+#include "vararraylist.h"
 #include <time.h>
 
 struct TransactionManager;

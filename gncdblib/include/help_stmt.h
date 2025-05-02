@@ -2,13 +2,12 @@
 #define HELP_STMT_H
 #include "stmt.h"
 
-typedef struct HelpStmt{
+typedef struct HelpStmt
+{
   StmtType type;
-}HelpStmt;
+} HelpStmt;
 
-int HelpStmtConstruct(Stmt **stmt);
-void HelpStmtDestroy(HelpStmt* helpStmt);
-
-
+int  HelpStmtConstruct(Stmt **stmt);
+void HelpStmtDestroy(HelpStmt *helpStmt);
 
 #endif

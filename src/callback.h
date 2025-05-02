@@ -8,5 +8,5 @@ void set_output_excel(int enable);
 int open_output_file(const char *fileName);
 void close_output_file();
 void set_print_column_names(int print);
-
+int callback_dump(void *data, int argc, char **azColName, char **argv);
 #endif

@@ -8,12 +8,16 @@
  */
 #ifndef _GNCDB_H_
 #define _GNCDB_H_
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "catalog.h"
 // #include "pagepool.h"
 // #include "tranmanager.h"
 #include "parse_defs.h"
-#include "varArrayList.h"
+#include "sql_event.h"
+#include "vararraylist.h"
 typedef struct CreateTableStmt CreateTableStmt;
 typedef enum FieldType FieldType;
 struct PagePool;
@@ -51,12 +55,18 @@ int GNCDB_update(struct GNCDB* db, int* affectedRows, char* tableName, int setNu
 int GNCDB_setBlob(struct GNCDB* db, char* tableName, int columnNum, BYTE* buf, int size, int keyValueNum, ...);
 int GNCDB_getBlob(struct GNCDB* db, char* tableName, int columnNum, BYTE* buf, int size, int keyValueNum, ...);
 int GNCDB_deleteBlob(struct GNCDB* db, char* tableName, int columnNum, int keyValueNum, ...);
-
 int GNCDB_setTableParam(struct GNCDB* db, char* tableName);
-
 int GNCDB_close(struct GNCDB** db);
 
 ////////////////////////////////SQL///////////////////////////////////////
+int GNCDB_exec(GNCDB* db, const char *sql, CallBack2 callback, void* data, char** errmsg);
+
+// todo 该函数不为外部接口，待定
+int txnExecuteSQL(SQLStageEvent* sqlEvent, const char *sql);
+int txnExecuteSQLStep(SQLStageEvent* sqlEvent, const char *sql);
+int executeSQLFile(GNCDB* db, char* fileName);
+
+
 /* R树索引内容 */
 int GNCDB_createRtreeIndex(struct GNCDB* db, char* tableName, char* indexName, int v_si32_dim, ...);
 
@@ -64,4 +74,7 @@ int GNCDB_dropRtreeTable(GNCDB* db, char* tableName);
 
 int GNCDB_selectRtreeIndex(GNCDB* db, CallBack callback, int* affectedRows, int tableNum, int columnNum, int filterNum, ...);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

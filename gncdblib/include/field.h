@@ -12,11 +12,12 @@
 #ifndef _GNCDB_FIELD_H_
 #define _GNCDB_FIELD_H_
 
+#include "typedefine.h"
 #include <stdbool.h>
 #include "utils.h"
-#include "gncdbConstant.h"
-#include "varArrayList.h"
-#include "typeDefine.h"
+#include "gncdbconstant.h"
+#include "vararraylist.h"
+
 
 typedef struct Field {
 	FieldType fieldType;

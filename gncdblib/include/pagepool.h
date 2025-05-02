@@ -10,12 +10,12 @@
 #define _PAGEPOOL_H_
 
 #include "btreepage.h"
-#include "HashMap.h"
-#include "typeDefine.h"
+#include "hashmap.h"
+#include "typedefine.h"
 //#include "gncdb.h"
 #include "os.h"
 #include "rtree.h"
-#include "list.h"
+// #include "list.h"
 #include <stdbool.h>
 #include "tranmanager.h"
 

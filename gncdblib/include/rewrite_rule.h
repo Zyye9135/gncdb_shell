@@ -1,17 +1,21 @@
 #ifndef REWRITE_RULE_H
 #define REWRITE_RULE_H
-typedef enum RewriteRuleType{
+typedef enum RewriteRuleType
+{
   RewriteRuleType_Invalid,
-}RewriteRuleType;
+} RewriteRuleType;
 
-typedef struct RewriteRule{
+typedef struct RewriteRule
+{
   RewriteRuleType type;
-}RewriteRule;
+} RewriteRule;
 
-typedef enum ExpressionRewriteRuleType{
+typedef enum ExpressionRewriteRuleType
+{
   ExpressionRewriteRuleType_Invalid,
-}ExpressionRewriteRuleType;
-typedef struct ExpressionRewriteRule{
+} ExpressionRewriteRuleType;
+typedef struct ExpressionRewriteRule
+{
   ExpressionRewriteRuleType type;
-}ExpressionRewriteRule;
-#endif // REWRITE_RULE_H
+} ExpressionRewriteRule;
+#endif  // REWRITE_RULE_H

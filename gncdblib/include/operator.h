@@ -14,8 +14,8 @@
 #define _OPERATOR_H_
 
 #include "rtree.h"
-#include "varArrayList.h"
-#include "typeDefine.h"
+#include "vararraylist.h"
+#include "typedefine.h"
 #include "gncdb.h"
 #include "tuple.h"
 

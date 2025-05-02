@@ -2,10 +2,11 @@
 #define SHOW_TABLES_STMT_H
 #include "gncdb.h"
 #include "stmt.h"
-typedef struct ShowTablesStmt{
+typedef struct ShowTablesStmt
+{
   StmtType type;
-}ShowTablesStmt;
+} ShowTablesStmt;
 
-int ShowTablesStmtConstruct(GNCDB* db, Stmt** stmt);
-void ShowTablesStmtDestroy(ShowTablesStmt* showTablesStmt);
+int  ShowTablesStmtConstruct(GNCDB *db, Stmt **stmt);
+void ShowTablesStmtDestroy(ShowTablesStmt *showTablesStmt);
 #endif

@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -g -fdiagnostics-color=always -I gncdblib/include
-LDFLAGS = -Lgncdblib/lib -lgncdblib
+LDFLAGS = -Lgncdblib/lib -lgncdb -lm
 
 # 源文件目录和对象文件目录
 SRC_DIR = src

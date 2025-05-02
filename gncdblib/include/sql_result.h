@@ -4,10 +4,11 @@
 
 // } TupleSchema;
 
-typedef struct SqlResult {
+typedef struct SqlResult
+{
   // TupleSchema tupleSchema;
-  int returnCode;
-  char* stateString;
-}SqlResult;
+  int   returnCode;
+  char *stateString;
+} SqlResult;
 
 #endif /* SQL_RESULT_H */

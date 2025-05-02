@@ -1,13 +1,11 @@
 #ifndef _CATALOG_H_
 #define _CATALOG_H_
 
-#include "typeDefine.h"
-#include "varArrayList.h"
-#include "HashMap.h"
-#include "gncdbConstant.h"
-#include "btreeCursor.h"
-// #include "transaction.h"
-// #include "rtree.h"
+#include "typedefine.h"
+#include "vararraylist.h"
+#include "hashmap.h"
+#include "gncdbconstant.h"
+#include "btreecursor.h"
 
 struct RtreeTable;
 /* 列约束 */
@@ -16,7 +14,7 @@ typedef struct ColumnConstraint
 	double minValue, maxValue;		/* 字段最大最小值*/
 	int canBeNull;					 /* 可否为NULL*/
 	int isPrimaryKey;				 /* 是否为主键*/
-}ColumnConstraint;
+}ColumnConstraint; 
 
 /* 列信息 */
 typedef struct Column 
@@ -58,6 +56,8 @@ typedef struct Catalog
 	struct TableSchema* schemaTableSchema;      /* schema的表头信息 */
 	struct BtreeTable* schemaTable;             /* schema表 */
     ReadWriteLock latch;						/* 保护共享资源 */
+
+	struct HashMap* tableStatsMap;				/* 表统计信息 */
 }Catalog;
 
 /* 获取主键的下标array */
@@ -82,6 +82,10 @@ TableSchema* tableSchemaConstruct(int maxRowNum, int columnNum, varArrayList* co
 int tableSchemaMerge(TableSchema** ts1, TableSchema* ts2, TableSchema* ts3);
 /* 获取一个表的TableSchema */
 TableSchema* getTableSchema(struct Catalog* catalog, char* tableName);
+/* 获取一个表的primaryKeyIndex */
+varArrayList* getPrimaryKeyIndex(struct Catalog* catalog, char* tableName);
+/* 获取一个表的primaryKeyType */
+varArrayList* getPrimaryKeyType(struct Catalog* catalog, char* tableName);
 /* catalog构造函数 */
 int catalogConstruct(struct GNCDB* db);
 /* 列约束销毁函数 */
@@ -112,6 +116,8 @@ int columnFindFieldExist(varArrayList* array, char* fieldName);
 int columnFindFieldGet(varArrayList* array, char* fieldName);
 /* 通过tableSchema获取fieldName的下标 */
 int tableSchemaGetIndex(struct TableSchema* tableSchema, char* fieldName);
+/* 通过tableSchema获取fieldName的的类型 */
+int tableSchemaGetFieldType(struct TableSchema* tableSchema, char* fieldName);
 // 总页数增加
 void totalPageNumAdd(struct GNCDB* db);
 
@@ -129,5 +135,7 @@ int catalogAddRtreeTable(struct GNCDB* db, char* tableName,
 
 int catalogGetDependentTableName(struct GNCDB* db, char* indexName, char** tableName, struct Transaction* tx);
 void printColumnConstraint(const ColumnConstraint *cc);
+
+char* catalogGetCreateTableSql(TableSchema* tableSchema, char* tableName);
 
 #endif

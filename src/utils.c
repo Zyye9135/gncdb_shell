@@ -4,13 +4,16 @@
 #include "callback.h"
 #include <unistd.h>
 #include <sys/stat.h>
-#include "db.h"
+#include "gncdb.h"
 #include "help.h"
 extern int ifTrace;
 extern int ifTimer;
 extern int ifEcho;
+extern int headerPrinted;
+extern char *rowSeparator;
 
 // extern int ifHeaders;
+extern int printColumnNames; // 默认为1，表示打印列名
 extern int ifChange;
 extern GNCDB *db;
 extern char *fileName;
@@ -119,7 +122,7 @@ void read_sql_from_file(const char *filename, GNCDB *db)
         }
 
         // 执行 SQL 命令
-        int rc = db_exec(db, sql, callback, NULL, NULL);
+        int rc = GNCDB_exec(db, sql, callback, NULL, NULL);
         if (rc == GNCDB_SUCCESS)
         {
             printf("SQL executed successfully: %s\n", sql);
@@ -213,7 +216,7 @@ int open_database(char *fileName, GNCDB **db)
     // 关闭当前数据库（如果有的话）
     if (*db != NULL && close_tag != 0)
     {
-        close_tag = db_close(db); // 假设 db_close 已经正确处理指针
+        close_tag = GNCDB_close(db); // 假设 GNCDB_close 已经正确处理指针
         if (close_tag != 0)
         {
             printf("Error closing previous database, return code: %d\n", close_tag);
@@ -232,7 +235,7 @@ int open_database(char *fileName, GNCDB **db)
     }
 
     // 打开新的数据库文件
-    int rc = db_open(fileName, db);
+    int rc = GNCDB_open(db, fileName);
     if (rc == 0)
     {
         printf("Database opened successfully.\n");
@@ -272,7 +275,7 @@ void dot_command(char *command, GNCDB *db)
         {
             printf("Error: No database is currently open.\n");
         }
-        db_exec(db, "select tableName from master", callback, NULL, NULL);
+        GNCDB_exec(db, "select tableName from master", callback, NULL, NULL);
     }
     else if (strncmp(command, ".schema", 7) == 0)
     {
@@ -281,7 +284,7 @@ void dot_command(char *command, GNCDB *db)
         {
             printf("Error: No database is currently open.\n");
         }
-        db_exec(db, "select sql from schema", callback, NULL, NULL);
+        GNCDB_exec(db, "select sql from master", callback, NULL, NULL);
     }
     else if (strncmp(command, ".cd", 3) == 0)
     {
@@ -391,11 +394,6 @@ void dot_command(char *command, GNCDB *db)
             printf("Error: Invalid command\n");
         }
     }
-    else if (strncmp(command, ".open", 5) == 0)
-    {
-        // 处理 .open 命令的逻辑
-        open_database(command + 6, &db);
-    }
     else if (strncmp(command, ".separator", 10) == 0)
     {
         // 处理 .separator 命令的逻辑
@@ -459,7 +457,7 @@ void dot_command(char *command, GNCDB *db)
     {
         //  关闭数据库
         int closetag = 1;
-        closetag = db_close(&db);
+        closetag = GNCDB_close(&db);
         if (closetag == 0)
         {
             printf("Database closed successfully.\n");
@@ -562,12 +560,17 @@ void dot_command(char *command, GNCDB *db)
             printf("Error: Invalid command\n");
         }
     }
+    else if (strncmp(command, ".indexes", 8) == 0)
+    {
+        // 处理 .indexes 命令的逻辑
+        handle_indexes_command(command, db);
+    }
     else if (strncmp(command, ".quit", 5) == 0)
     {
         // printf("退出命令处理\n");
         //  关闭数据库
         int closetag = 1;
-        closetag = db_close(&db);
+        closetag = GNCDB_close(&db);
         if (closetag == 0)
         {
             printf("Database closed successfully.\n");
@@ -602,6 +605,10 @@ void dot_command(char *command, GNCDB *db)
         {
             printf("Error: Invalid command\n");
         }
+    }
+    else if (strncmp(command, ".dump", 5) == 0)
+    {
+        handle_dump_command(command, db);
     }
     else if (strncmp(command, ".trace ", 7) == 0)
     {
@@ -751,4 +758,117 @@ int dot_clone(const char *command, int g)
     }
     free(commandCopy); // 释放复制的命令字符串
     return result;
+}
+
+// 处理.dump命令
+void handle_dump_command(const char *command, GNCDB *db) {
+    char *commandCopy = strdup(command);
+    char *token = strtok(commandCopy, " ");
+    
+    // 跳过".dump"命令
+    token = strtok(NULL, " ");
+    
+    if (!token) {
+        printf("Usage: .dump [table_name]\n");
+        free(commandCopy);
+        return;
+    }
+
+    // 输出PRAGMA和BEGIN TRANSACTION
+    printf("BEGIN TRANSACTION;\n");
+
+    // 保存当前的printColumnNames值
+    int tempHeaders = printColumnNames;
+    printColumnNames = 0;
+
+    // 构建查询语句获取CREATE TABLE语句
+    char query[1024];
+    snprintf(query, sizeof(query), "SELECT sql FROM master WHERE tableName=\"%s\";", token);
+
+    // 执行查询获取表的创建语句
+    char *errmsg = NULL;
+    int rc = GNCDB_exec(db, query, callback_echo_off, NULL, NULL);
+    if (rc != 0) {
+        printf("Error: Failed to execute query. Return code: %d\n", rc);
+        if (errmsg) {
+            printf("Error message: %s\n", errmsg);
+            free(errmsg);
+        }
+        free(commandCopy);
+        printColumnNames = tempHeaders;
+        return;
+    }
+
+    // 构建查询数据的SQL
+    snprintf(query, sizeof(query), "SELECT * FROM %s", token);
+    
+    // 执行查询获取表数据
+    rc = GNCDB_exec(db, query, (CallBack2)callback_dump, (void*)token, &errmsg);
+    
+    if (rc != 0) {
+        printf("Error: Failed to execute query. Return code: %d\n", rc);
+        if (errmsg) {
+            printf("Error message: %s\n", errmsg);
+            free(errmsg);
+        }
+        free(commandCopy);
+        printColumnNames = tempHeaders;
+        return;
+    }
+
+    // 输出COMMIT
+    printf("COMMIT;\n");
+
+    // 恢复原始的printColumnNames值
+    printColumnNames = tempHeaders;
+    free(commandCopy);
+}
+
+void handle_indexes_command(const char *command, GNCDB *db) {
+    // 复制命令字符串以便解析
+    char *commandCopy = strdup(command);
+    if (!commandCopy) {
+        printf("Error: Memory allocation failed\n");
+        return;
+    }
+
+    // 解析命令
+    char *token = strtok(commandCopy, " ");
+    if (!token) {
+        printf("Error: Invalid command format\n");
+        free(commandCopy);
+        return;
+    }
+
+    // 跳过".indexes"命令
+    token = strtok(NULL, " ");
+
+    // 保存当前的printColumnNames值
+    int tempHeaders = printColumnNames;
+    printColumnNames = 0;
+
+    char *errmsg = NULL;
+    int rc;
+
+    if (token == NULL) {
+        // 如果没有指定表名，显示所有索引
+        rc = GNCDB_exec(db, "SELECT id, tableName FROM master;", callback_echo_off, NULL, &errmsg);
+    } else {
+        // 显示指定表的索引
+        char query[1024];
+        snprintf(query, sizeof(query), "SELECT id FROM master WHERE tableName=\"%s\";", token);
+        rc = GNCDB_exec(db, query, callback_echo_off, NULL, &errmsg);
+    }
+
+    if (rc != 0) {
+        printf("Error: Failed to execute query. Return code: %d\n", rc);
+        if (errmsg) {
+            printf("Error message: %s\n", errmsg);
+            free(errmsg);
+        }
+    }
+
+    // 恢复原始的printColumnNames值
+    printColumnNames = tempHeaders;
+    free(commandCopy);
 }

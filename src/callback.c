@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>  // access() 用于检查文件读写权限
-#include "db.h"
+#include "gncdb.h"
 
 // 定义一个全局配置变量，控制是否打印列名
 int printColumnNames = 1; // 默认为1，表示打印列名
@@ -12,7 +12,7 @@ int columnWidth = 15; // 默认列宽为15
 FILE *outputFile = NULL; // 文件指针，初始化为NULL
 extern char *colSeparator;  // 列分隔符
 extern char *rowSeparator;  // 行分隔符
-
+extern GNCDB *db;
 // 提供一个接口函数用于修改配置
 void set_print_column_names(int print) {
     printColumnNames = print;
@@ -255,5 +255,77 @@ int callback_echo_off(void *data, int argc, char **azColName, char **argv) {
             fprintf(outputFile, "%s", rowSeparator);
         }
     }
+    return 0;
+}
+
+// 用于获取列类型的回调函数
+int callback_get_column_type(void *data, int argc, char **azColName, char **argv) {
+    if (argc > 0 && argv[0]) {
+        int *columnType = (int *)data;
+        *columnType = atoi(argv[0]);
+    }
+    return 0;
+}
+
+int callback_dump(void *data, int argc, char **azColName, char **argv)
+{
+    char *tableName = (char *)data;
+    printf("INSERT INTO %s VALUES ( ", tableName);
+    headerPrinted = 1;
+    
+    for (int i = 0; i < argc; i++) {
+        if (strcmp(azColName[i], "UPDATE COUNT") == 0 ||
+            strcmp(azColName[i], "DELETE COUNT") == 0) {
+            return 0;
+        }
+    }
+
+    if (printColumnNames && !headerPrinted) {
+        for (int i = 0; i < argc; i++) {
+            if (strcmp(azColName[i], "createTime") == 0 ||
+                strcmp(azColName[i], "updateTime") == 0 ||
+                strcmp(azColName[i], "rowId") == 0) {
+                continue;
+            }
+        }
+        printf("%s", rowSeparator);
+        headerPrinted = 1;
+    }
+
+    for (int i = 0; i < argc; i++) {
+        if (strcmp(azColName[i], "createTime") == 0 ||
+            strcmp(azColName[i], "updateTime") == 0 ||
+            strcmp(azColName[i], "rowId") == 0) {
+            continue;
+        }
+
+        // 获取列的类型
+        char typeQuery[1024];
+        snprintf(typeQuery, sizeof(typeQuery), 
+                "SELECT columnType FROM schema WHERE columnName=\"%s\" AND tableName=\"%s\";",
+                azColName[i], tableName);
+        
+        char *errmsg = NULL;
+        int columnType = 0;
+        GNCDB_exec(db, typeQuery, callback_get_column_type, &columnType, &errmsg);
+
+        if (i > 0) {
+            printf(",");
+        }
+
+        if (argv[i]) {
+            // 如果是字符类型(3)，则添加引号
+            if (columnType == 3) {
+                printf("\"%s\"", argv[i]);
+            } else {
+                printf("%s", argv[i]);
+            }
+        } else {
+            printf("NULL");
+        }
+    }
+    printf(");");
+    printf("%s", rowSeparator);
+
     return 0;
 }

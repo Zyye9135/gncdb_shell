@@ -2,7 +2,7 @@
 #define PHYSICAL_OPERATOR_H
 #include "exec_tuple.h"
 #include "sql_event.h"
-#include "varArrayList.h"
+#include "vararraylist.h"
 typedef enum PhysicalOperatorType
 {
   PO_TABLE_SCAN,
@@ -24,22 +24,21 @@ typedef enum PhysicalOperatorType
   PO_LIMIT,
 } PhysicalOperatorType;
 
-typedef struct PhysicalOperator{
+typedef struct PhysicalOperator
+{
   PhysicalOperatorType type;
-  varArrayList* children;// element type:<PhysicalOperator*>
-  AbstractTuple* parentTuple;
-
-
-}PhysicalOperator;
-int PhysicalOperatorInit(PhysicalOperator* physicalOperator, PhysicalOperatorType type);
-int PhysicalOperatorOpen(PhysicalOperator*physicalOperator,SQLStageEvent* sqlEvent);
-int PhysicalOperatorNext(PhysicalOperator* physicalOperator,SQLStageEvent* sqlEvent);
-int PhysicalOperatorClose(PhysicalOperator* physicalOperator,SQLStageEvent* sqlEvent);
-AbstractTuple* GetCurrentTuple(PhysicalOperator* physicalOperator);
-BtreeCursor* GetScanCursor(PhysicalOperator* physicalOperator);
-void setParentTuple(PhysicalOperator* physicalOperator, AbstractTuple* parentTuple);
-void PhysicalOperatorToString(PhysicalOperator* physicalOperator, int depth);
-void PhysicalOperatorDestroy(PhysicalOperator* physicalOperator);
-void PhysicalOperatorPointerDestroy(void* data);
-PhysicalOperator* PhysicalOperatorMove(PhysicalOperator** physicalOperator);
-#endif // PHYSICAL_OPERATOR_H
+  varArrayList        *children;  // element type:<PhysicalOperator*>
+  AbstractTuple       *parentTuple;
+} PhysicalOperator;
+int               PhysicalOperatorInit(PhysicalOperator *physicalOperator, PhysicalOperatorType type);
+int               PhysicalOperatorOpen(PhysicalOperator *physicalOperator, SQLStageEvent *sqlEvent);
+int               PhysicalOperatorNext(PhysicalOperator *physicalOperator, SQLStageEvent *sqlEvent);
+int               PhysicalOperatorClose(PhysicalOperator *physicalOperator, SQLStageEvent *sqlEvent);
+AbstractTuple    *GetCurrentTuple(PhysicalOperator *physicalOperator);
+BtreeCursor      *GetScanCursor(PhysicalOperator *physicalOperator);
+void              setParentTuple(PhysicalOperator *physicalOperator, AbstractTuple *parentTuple);
+void              PhysicalOperatorToString(PhysicalOperator *physicalOperator, int depth);
+void              PhysicalOperatorDestroy(PhysicalOperator *physicalOperator);
+void              PhysicalOperatorPointerDestroy(void *data);
+PhysicalOperator *PhysicalOperatorMove(PhysicalOperator **physicalOperator);
+#endif  // PHYSICAL_OPERATOR_H

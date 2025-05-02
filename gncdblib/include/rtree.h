@@ -14,9 +14,9 @@
 #ifndef _GNCDB_RTREE_PAGE_H_
 #define _GNCDB_RTREE_PAGE_H_
 
-#include "typeDefine.h"
-#include "gncdbConstant.h"
-#include "varArrayList.h"
+#include "typedefine.h"
+#include "gncdbconstant.h"
+#include "vararraylist.h"
 #include "tuple.h"
 #include "catalog.h"
 #include "transaction.h"

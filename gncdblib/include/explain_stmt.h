@@ -5,9 +5,9 @@
 typedef struct ExplainStmt
 {
   StmtType type;
-  Stmt* childStmt;
-}ExplainStmt;
-int ExplainStmtConstruct(SQLStageEvent* sqlEvent, Stmt** stmt);
+  Stmt    *childStmt;
+} ExplainStmt;
+int ExplainStmtConstruct(SQLStageEvent *sqlEvent, Stmt **stmt);
 
-void ExplainStmtDestroy(ExplainStmt* explainStmt);
+void ExplainStmtDestroy(ExplainStmt *explainStmt);
 #endif

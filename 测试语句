@@ -23,7 +23,7 @@ SELECT AVG(age) FROM company;
 -- 按年龄降序排序
 SELECT * FROM company ORDER BY age DESC;
 
-CREATE TABLE company (
+CREATE TABLE company2 (
     id INT PRIMARY KEY,
     name CHAR(100),
     age INT

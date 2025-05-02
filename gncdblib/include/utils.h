@@ -18,5 +18,18 @@ void swap_str(char* str1, char* str2);
 bool isEqualOfInt(void* key1, void* key2);
 /* 判断两个字符串是否相等 */
 bool isEqualOfString(void* key1, void* key2);
+/* 判断字符串是否为空 */
+int isBlank(const char *s);
+/* 字符串拼接 */
+char* strConcat(const char* str1, const char* str2);
+void init2DArray(char** array, int num);
+void reset2DArray(char** array, int num);
+void free2DArray(char*** array, int num);
+char** deepCopy2DArray(char** source, int rows);
+/* 字符串move */
+char* strMove(char** str);
+
+const char* extractFieldName(const char *input);
+int checkStringType(const char *str);
 
 #endif

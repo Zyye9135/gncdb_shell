@@ -1,11 +1,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "db.h"
+#include "gncdb.h"
 #include "callback.h"
 #include "util.h"
 #include <sys/time.h>
 #include <unistd.h>
+#include <dirent.h>
+#include <time.h>
 
 void dot_databases(GNCDB *db);
 
@@ -13,7 +15,7 @@ void read_config(const char *filename);
 double get_time_in_seconds();
 
 // 全局变量，数据库文件信息
-char *fileName = "GNCDB.dat";
+char *fileName = "";
 char *filePath = "";
 
 // 全局变量，控制打印要求
@@ -35,11 +37,61 @@ extern int ifExcel;
 extern FILE *outputFile;
 GNCDB *db = NULL;
 
+// 生成临时数据库文件名
+char* generate_temp_db_name() {
+    time_t now;
+    time(&now);
+    char* temp_name = (char*)malloc(50);
+    sprintf(temp_name, "temp_%ld.dat", now);
+    return temp_name;
+}
+
+// 清理临时数据库文件
+void cleanup_temp_dbs() {
+    DIR *dir;
+    struct dirent *entry;
+    char* current_db = NULL;
+    
+    // 获取当前临时数据库名
+    if (fileName && strstr(fileName, "temp_") == fileName) {
+        current_db = strdup(fileName);
+    }
+    
+    dir = opendir(".");
+    if (dir == NULL) {
+        return;
+    }
+    
+    while ((entry = readdir(dir)) != NULL) {
+        if (strstr(entry->d_name, "temp_") == entry->d_name && 
+            strstr(entry->d_name, ".dat") != NULL) {
+            // 跳过当前使用的临时数据库
+            if (current_db && strcmp(entry->d_name, current_db) == 0) {
+                continue;
+            }
+            // 删除其他临时数据库
+            remove(entry->d_name);
+        }
+    }
+    
+    closedir(dir);
+    if (current_db) {
+        free(current_db);
+    }
+}
+
 int main()
 {
     int rc;
     char sql[4096] = {0};   // 存储完整的SQL命令
     char input[1024] = {0}; // 每次输入的缓冲区
+    
+    // 生成新的临时数据库名
+    fileName = generate_temp_db_name();
+    
+    // 清理旧的临时数据库
+    cleanup_temp_dbs();
+    
     update_config_value("output", "stdout");
     // 初始化提示符
     prompt = strdup("AxDB> ");
@@ -48,12 +100,13 @@ int main()
     read_config("config.ini");
 
     // 打开数据库
-    rc = db_open(fileName, &db);
+    rc = GNCDB_open(&db, fileName);
     if (rc == 0)
     {
         printf("GNCDB version 1.0.0 2025-02-18 16:09 (UTF-8 console I/O)\n"
                "Enter \".help\" for usage hints.\n"
-               "Use \".open FILENAME\" to reopen on a persistent database.\n");
+               "Use \".open FILENAME\" to reopen on a persistent database.\n"
+               "Current temporary database: %s\n", fileName);
         getcwd(opDir, sizeof(opDir));
     }
     else
@@ -148,12 +201,13 @@ int main()
             if (ifChange)
             {
                 set_print_column_names(1);
-                rc = db_exec(db, sql, callback, NULL, NULL);
+                char *errmsg = NULL;
+                rc = GNCDB_exec(db, sql, callback, NULL, &errmsg);
                 set_print_column_names(ifHeaders);
             }
             else
             {
-                rc = db_exec(db, sql, callback_echo_off, NULL, NULL);
+                rc = GNCDB_exec(db, sql, callback_echo_off, NULL, NULL);
             }
             if (ifExcel)
             {
@@ -183,6 +237,12 @@ int main()
 
     // 释放提示符字符串
     free(prompt);
+
+    // 在程序退出前清理临时数据库
+    if (fileName && strstr(fileName, "temp_") == fileName) {
+        remove(fileName);
+        free(fileName);
+    }
 
     return 0;
 }

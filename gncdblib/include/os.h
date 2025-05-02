@@ -11,8 +11,8 @@
 
 #include <stdbool.h>
 #include <stdio.h>
-#include "typeDefine.h"
-#include "gncdbConstant.h"
+#include "typedefine.h"
+#include "gncdbconstant.h"
 
 //#define TIMING true
 
