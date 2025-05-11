@@ -1,1 +1,0 @@
-/usr/bin/cc  -Wall -g -fdiagnostics-color=always CMakeFiles/gncdb_shell.dir/src/callback.c.o CMakeFiles/gncdb_shell.dir/src/help.c.o CMakeFiles/gncdb_shell.dir/src/main.c.o CMakeFiles/gncdb_shell.dir/src/utils.c.o -o /home/zyy/桌面/gncdb_shell/gncdb_shell  /home/zyy/桌面/gncdb_shell/gncdblib/lib/libgncdb.a -lm -lreadline 

@@ -1,9 +1,0 @@
-{
-    "C_Cpp.errorSquiggles": "disabled",
-    "files.associations": {
-        "stat.h": "c",
-        "unistd.h": "c"
-    },
-    "cmake.configureOnOpen": true,
-    "cmake.buildDirectory": "${workspaceFolder}/build"
-}
