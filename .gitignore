@@ -1,2 +1,14 @@
 gncdb_ui2-x86_64.AppImage
 log/
+*.dat
+*.db
+*.txt
+build/
+CMakeCache.txt
+.gitignore
+.vscode/
+.VSCodeCounter/
+_CPack_Packages/
+测试语句
+*.cmake
+*.deb

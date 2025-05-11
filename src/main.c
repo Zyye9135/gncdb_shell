@@ -30,7 +30,7 @@ double get_time_in_seconds();
 // 全局变量，数据库文件信息
 char *fileName = "";
 char *filePath = "";
-char configPath[1024] = {0}; // 添加配置文件路径变量
+char config_absolute_path[1024] = {0}; // 配置文件的绝对路径
 
 // 全局变量，控制打印要求
 int ifHeaders = 0;
@@ -39,17 +39,85 @@ int ifTrace = 0;
 int ifEcho = 0;
 int ifChange = 0;
 int ifCrnl = 0;
-
-extern int columnWidth;
+int ifExcel = 0;
+int columnWidth = 15;
 char opDir[1024]; // 运行中的目录
 char *prompt;
 char *onceOption = NULL;
 char *colSeparator = "|";  // 列分隔符，默认为制表符
 char *rowSeparator = "\n"; // 行分隔符，默认为换行符
 extern int headerPrinted;
-extern int ifExcel;
 extern FILE *outputFile;
 GNCDB *db = NULL;
+
+// 打印配置信息
+void show_config(const char *filename)
+{
+    FILE *file = fopen(filename, "r");
+    if (file == NULL)
+    {
+        fprintf(stderr, "Failed to open config file: %s\n", filename);
+        return;
+    }
+
+    char line[256];      // 用于存储每一行的内容
+    int line_number = 1; // 记录当前行号
+
+    while (fgets(line, sizeof(line), file))
+    {
+        // 跳过前1行（只读取第2至第8行）
+        if (line_number < 2 || line_number > 8)
+        {
+            line_number++;
+            continue;
+        }
+
+        // 去掉行末的换行符
+        line[strcspn(line, "\n")] = 0;
+
+        // 解析键值对
+        char *key = strtok(line, "=");
+        char *value = strtok(NULL, "=");
+
+        if (key && value)
+        {
+            printf("%-*s: %s\n", 14, key, value);
+        }
+
+        line_number++;
+    }
+
+    fclose(file);
+}
+
+// 打印版本信息
+void show_first_line(const char *filename)
+{
+    FILE *file = fopen(filename, "r");
+    if (file == NULL)
+    {
+        fprintf(stderr, "Failed to open config file: %s\n", filename);
+        return;
+    }
+
+    char line[256]; // 用于存储每一行的内容
+
+    // 读取第一行
+    if (fgets(line, sizeof(line), file))
+    {
+        // 去掉行末的换行符
+        line[strcspn(line, "\n")] = 0;
+
+        // 输出第一行的内容
+        printf("%s\n", line);
+    }
+    else
+    {
+        fprintf(stderr, "Failed to read the first line\n");
+    }
+
+    fclose(file);
+}
 
 // 生成临时数据库文件名
 char* generate_temp_db_name() {
@@ -94,31 +162,38 @@ void cleanup_temp_dbs() {
     }
 }
 
-// 查找配置文件
-void find_config_file() {
-    // 1. 首先检查当前目录
-    if (access("config.ini", F_OK) == 0) {
-        strcpy(configPath, "config.ini");
+// 初始化配置文件
+void init_config_file() {
+    char current_path[1024];
+    if (getcwd(current_path, sizeof(current_path)) == NULL) {
+        perror("getcwd() error");
         return;
     }
     
-    // 2. 检查用户主目录
-    char *home = getenv("HOME");
-    if (home) {
-        snprintf(configPath, sizeof(configPath), "%s/.gncdb/config.ini", home);
-        if (access(configPath, F_OK) == 0) {
+    // 构建配置文件的绝对路径
+    snprintf(config_absolute_path, sizeof(config_absolute_path), "%s/gncdb_config.ini", current_path);
+    
+    // 检查配置文件是否存在
+    if (access(config_absolute_path, F_OK) == -1) {
+        // 如果文件不存在，创建并写入默认配置
+        FILE *file = fopen(config_absolute_path, "w");
+        if (file == NULL) {
+            perror("Error creating config file");
             return;
         }
+        
+        // 写入默认配置
+        fprintf(file, "[output]\n");
+        fprintf(file, "format=stdout\n");
+        fprintf(file, "headers=1\n");
+        fprintf(file, "echo=0\n");
+        fprintf(file, "trace=0\n");
+        fprintf(file, "excel=0\n");
+        fprintf(file, "change=0\n");
+        
+        fclose(file);
+        printf("Created default config file at: %s\n", config_absolute_path);
     }
-    
-    // 3. 检查系统配置目录
-    strcpy(configPath, "/etc/gncdb-shell/config.ini");
-    if (access(configPath, F_OK) == 0) {
-        return;
-    }
-    
-    // 4. 如果都找不到，使用当前目录
-    strcpy(configPath, "config.ini");
 }
 
 int main()
@@ -136,8 +211,8 @@ int main()
         }
     }
     
-    // 查找配置文件
-    find_config_file();
+    // 初始化配置文件
+    init_config_file();
     
     // 生成新的临时数据库名
     fileName = generate_temp_db_name();
@@ -150,7 +225,7 @@ int main()
     prompt = strdup("AxDB> ");
 
     // 读取配置文件
-    read_config(configPath);
+    read_config(config_absolute_path);
 
     // 打开数据库
     rc = GNCDB_open(&db, fileName);
@@ -224,7 +299,7 @@ int main()
             // 执行 SQL 命令
             set_print_column_names(ifHeaders);
             headerPrinted = 0;
-            read_config(configPath);
+            read_config(config_absolute_path);
             // 记录开始时间
             // 去除 SQL 开头的空格
             char *trimmed_sql = sql;
@@ -301,274 +376,95 @@ int main()
 }
 
 // 读取配置文件并解析
-void read_config(const char *configname)
-{
-    FILE *file = fopen(configname, "r");
-    if (file == NULL)
-    {
-        // 如果文件不存在，使用默认配置
-        char *line = strtok(strdup(DEFAULT_CONFIG), "\n");
-        int line_number = 0;
-        
-        while (line != NULL) {
-            line_number++;
-            
-            // 处理每一行配置
-            if (line_number == 2) { // echo
-                if (strcmp(line, "echo=off") == 0) {
-                    ifEcho = 0;
-                } else if (strcmp(line, "echo=on") == 0) {
-                    ifEcho = 1;
-                }
-            }
-            else if (line_number == 3) { // headers
-                if (strcmp(line, "headers=off") == 0) {
-                    ifHeaders = 0;
-                } else if (strcmp(line, "headers=on") == 0) {
-                    ifHeaders = 1;
-                }
-            }
-            else if (line_number == 5) { // output
-                char *outputValue = strstr(line, "=") + 1;
-                if (strcmp(outputValue, "stdout") == 0) {
-                    outputFile = NULL;
-                    ifExcel = 0;
-                } else if (strcmp(outputValue, "excel") == 0) {
-                    outputFile = fopen("output.csv", "w");
-                    ifExcel = 1;
-                } else {
-                    outputFile = fopen(outputValue, "w");
-                    ifExcel = 1;
-                }
-            }
-            else if (line_number == 6) { // colseparator
-                char *colSeparatorValue = strstr(line, "=") + 1;
-                if (strcmp(colSeparatorValue, "\\n") == 0) {
-                    colSeparator = ifCrnl ? "\r\n" : "\n";
-                } else if (strcmp(colSeparatorValue, "\\t") == 0) {
-                    colSeparator = "\t";
-                } else {
-                    colSeparator = strdup(colSeparatorValue);
-                }
-            }
-            else if (line_number == 7) { // rowseparator
-                char *rowSeparatorValue = strstr(line, "=") + 1;
-                if (strcmp(rowSeparatorValue, "\\n") == 0) {
-                    rowSeparator = ifCrnl ? "\r\n" : "\n";
-                } else if (strcmp(rowSeparatorValue, "\\t") == 0) {
-                    rowSeparator = "\t";
-                } else {
-                    rowSeparator = strdup(rowSeparatorValue);
-                }
-            }
-            else if (line_number == 8) { // columnWidth
-                char *columnWidthValue = strstr(line, "=") + 1;
-                columnWidth = atoi(columnWidthValue);
-            }
-            else if (line_number == 9) { // timer
-                if (strcmp(line, "timer=off") == 0) {
-                    ifTimer = 0;
-                } else if (strcmp(line, "timer=on") == 0) {
-                    ifTimer = 1;
-                }
-            }
-            else if (line_number == 10) { // crnl
-                if (strcmp(line, "crnl=off") == 0) {
-                    ifCrnl = 0;
-                } else if (strcmp(line, "crnl=on") == 0) {
-                    ifCrnl = 1;
-                }
-            }
-            
-            line = strtok(NULL, "\n");
-        }
+void read_config(const char *configPath) {
+    FILE *file = fopen(configPath, "r");
+    if (file == NULL) {
+        perror("Error opening config file");
         return;
     }
-
-    // 如果文件存在，按原来的方式读取
+    
     char line[256];
-    int line_number = 0;
+    char section[64] = "";
+    char key[64];
+    char value[256];
+    
     while (fgets(line, sizeof(line), file)) {
-        line_number++;
-
-        // 当读取到第二行时，解析echo
-        if (line_number == 2)
-        {
-            // 去掉换行符
-            line[strcspn(line, "\n")] = 0;
-
-            // 根据第二行的内容设置ifEcho
-            if (strcmp(line, "echo=off") == 0)
-            {
-                ifEcho = 0; // 不回显
-            }
-            else if (strcmp(line, "echo=on") == 0)
-            {
-                ifEcho = 1; // 回显
-            }
+        // 去除行末的换行符
+        line[strcspn(line, "\n")] = 0;
+        
+        // 跳过空行
+        if (strlen(line) == 0) continue;
+        
+        // 处理节名
+        if (line[0] == '[' && line[strlen(line)-1] == ']') {
+            strncpy(section, line+1, strlen(line)-2);
+            section[strlen(line)-2] = '\0';
             continue;
         }
-        // 当读取到第三行时，解析headers
-        if (line_number == 3)
-        {
-            // 去掉换行符
-            line[strcspn(line, "\n")] = 0;
-
-            // 根据第三行的内容设置ifHeaders
-            if (strcmp(line, "headers=off") == 0)
-            {
-                ifHeaders = 0; // 不打印列名
-            }
-            else if (strcmp(line, "headers=on") == 0)
-            {
-                ifHeaders = 1; // 打印列名
-            }
-            continue;
-        }
-        // 读到第5行解析output
-        if (line_number == 5)
-        {
-            if (strstr(line, "output=") != NULL)
-            {
-                char *outputValue = strstr(line, "=") + 1;
-                // 去除换行符
-                size_t len = strlen(outputValue);
-                if (len > 0 && outputValue[len - 1] == '\n')
-                {
-                    outputValue[len - 1] = '\0';
-                }
-                if (strcmp(outputValue, "stdout") == 0)
-                {
-                    outputFile = NULL;
-                    ifExcel = 0;
-                }else if(strcmp(outputValue, "excel") == 0)
-                {
-                    outputFile = fopen("output.csv", "w");
-                    ifExcel = 1;
-                }
-                else
-                {
-                    outputFile = fopen(outputValue, "w");
-                    ifExcel = 1;
+        
+        // 处理键值对
+        if (sscanf(line, "%[^=]=%s", key, value) == 2) {
+            if (strcmp(section, "output") == 0) {
+                if (strcmp(key, "format") == 0) {
+                    if (strcmp(value, "excel") == 0) {
+                        set_output_excel(1);
+                    } else {
+                        set_output_excel(0);
+                    }
+                } else if (strcmp(key, "headers") == 0) {
+                    set_print_column_names(atoi(value));
+                } else if (strcmp(key, "echo") == 0) {
+                    ifEcho = atoi(value);
+                } else if (strcmp(key, "trace") == 0) {
+                    ifTrace = atoi(value);
+                } else if (strcmp(key, "excel") == 0) {
+                    ifExcel = atoi(value);
+                } else if (strcmp(key, "change") == 0) {
+                    ifChange = atoi(value);
                 }
             }
-        }
-        // 读到第6行解析colSeparator
-        if (line_number == 6)
-        {
-            if (strstr(line, "colseparator=") != NULL)
-            {
-                char *colSeparatorValue = strstr(line, "=") + 1;
-                // 去除换行符
-                size_t len = strlen(colSeparatorValue);
-                if (len > 0 && colSeparatorValue[len - 1] == '\n')
-                {
-                    colSeparatorValue[len - 1] = '\0';
-                }
-                colSeparator = strdup(colSeparatorValue);
-                if (strcmp(colSeparatorValue, "\\n") == 0)
-                {
-                    if (ifCrnl)
-                    {
-                        colSeparator = "\r\n";
-                    } // 转换换行符
-                    else
-                        colSeparator = "\n";
-                }
-                else if (strcmp(colSeparatorValue, "\\t") == 0)
-                {
-                    colSeparator = "\t";
-                }
-                else
-                {
-                    colSeparator = strdup(colSeparatorValue);
-                }
-            }
-        }
-        // 读到第7行解析rowSeparator
-        if (line_number == 7)
-        {
-            if (strstr(line, "rowseparator=") != NULL)
-            {
-                char *rowSeparatorValue = strstr(line, "=") + 1;
-                // 去除换行符
-                size_t len = strlen(rowSeparatorValue);
-                if (len > 0 && rowSeparatorValue[len - 1] == '\n')
-                {
-                    rowSeparatorValue[len - 1] = '\0';
-                }
-
-                rowSeparator = strdup(rowSeparatorValue);
-                if (strcmp(rowSeparatorValue, "\\n") == 0)
-                {
-                    if (ifCrnl)
-                    {
-                        rowSeparator = "\r\n";
-                    } // 转换换行符
-                    else
-                        rowSeparator = "\n";
-                }
-                else if (strcmp(rowSeparatorValue, "\\t") == 0)
-                {
-                    rowSeparator = "\t";
-                }
-                else
-                {
-                    rowSeparator = strdup(rowSeparatorValue);
-                }
-            }
-        }
-        // 读到第8行读取columnWidth
-        if (line_number == 8)
-        {
-            if (strstr(line, "columnWidth=") != NULL)
-            {
-                char *columnWidthValue = strstr(line, "=") + 1;
-                // 去除换行符
-                size_t len = strlen(columnWidthValue);
-                if (len > 0 && columnWidthValue[len - 1] == '\n')
-                {
-                    columnWidthValue[len - 1] = '\0';
-                }
-                columnWidth = atoi(columnWidthValue);
-            }
-        }
-        // 读到第9行解析timer
-        if (line_number == 9)
-        {
-            // 去掉换行符6
-            line[strcspn(line, "\n")] = 0;
-
-            // 根据第九行的内容设置ifTimer
-            if (strcmp(line, "timer=off") == 0)
-            {
-                ifTimer = 0; // 不打印时间
-            }
-            else if (strcmp(line, "timer=on") == 0)
-            {
-                ifTimer = 1; // 打印时间
-            }
-            continue;
-        }
-        // 读到第10行解析crnl
-        if (line_number == 10)
-        {
-            // 去掉换行符
-            line[strcspn(line, "\n")] = 0;
-
-            // 根据第十行的内容设置ifCrnl
-            if (strcmp(line, "crnl=off") == 0)
-            {
-                ifCrnl = 0; // 不转换换行符
-            }
-            else if (strcmp(line, "crnl=on") == 0)
-            {
-                ifCrnl = 1; // 转换换行符
-            }
-            continue;
         }
     }
+    
+    fclose(file);
+}
 
+// 更新配置文件中的值
+void update_config_value(const char *key, const char *value) {
+    FILE *file = fopen(config_absolute_path, "r+");
+    if (file == NULL) {
+        perror("Error opening config file for update");
+        return;
+    }
+    
+    // 读取整个文件内容
+    char content[4096] = "";
+    char line[256];
+    while (fgets(line, sizeof(line), file)) {
+        strcat(content, line);
+    }
+    
+    // 查找并替换键值对
+    char *pos = strstr(content, key);
+    if (pos != NULL) {
+        // 找到键，替换值
+        char *value_start = strchr(pos, '=');
+        if (value_start != NULL) {
+            value_start++; // 移动到值的位置
+            char *value_end = strchr(value_start, '\n');
+            if (value_end != NULL) {
+                // 替换值
+                int value_len = strlen(value);
+                int old_value_len = value_end - value_start;
+                memmove(value_start + value_len, value_end, strlen(value_end) + 1);
+                memcpy(value_start, value, value_len);
+            }
+        }
+    }
+    
+    // 写回文件
+    rewind(file);
+    fputs(content, file);
     fclose(file);
 }
 

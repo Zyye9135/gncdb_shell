@@ -6,15 +6,33 @@
 #include <sys/stat.h>
 #include "gncdb.h"
 #include "help.h"
-extern int ifTrace;
+
+// 声明外部变量
+extern char config_absolute_path[1024];
+extern int ifHeaders;
 extern int ifTimer;
+extern int ifTrace;
 extern int ifEcho;
-extern int headerPrinted;
+extern int ifChange;
+extern int ifCrnl;
+extern int ifExcel;
+extern FILE *outputFile;
+extern char *colSeparator;
 extern char *rowSeparator;
+extern int columnWidth;
+
+// 声明外部函数
+void read_config();
+void update_config_value(const char *key, const char *value);
+void show_config(const char *filename);
+void show_first_line(const char *filename);
+
+// 函数前向声明
+void handle_dump_command(const char *command, GNCDB *db);
+void handle_indexes_command(const char *command, GNCDB *db);
 
 // extern int ifHeaders;
 extern int printColumnNames; // 默认为1，表示打印列名
-extern int ifChange;
 extern GNCDB *db;
 extern char *fileName;
 extern char *workPath;
@@ -25,79 +43,6 @@ char *workPath = NULL;
 void dot_databases(GNCDB *db);
 int dot_clone(const char *command, int g);
 #define MAX_KEY_LENGTH 14 // 假设最大键名长度为 12 字符
-
-// 打印配置信息
-void show_config(const char *filename)
-{
-    FILE *file = fopen(filename, "r");
-    if (file == NULL)
-    {
-        fprintf(stderr, "Failed to open config file: %s\n", filename);
-        return;
-    }
-
-    char line[256];      // 用于存储每一行的内容
-    int line_number = 1; // 记录当前行号
-
-    while (fgets(line, sizeof(line), file))
-    {
-        // 跳过前1行（只读取第2至第8行）
-        if (line_number < 2 || line_number > 8)
-        {
-            line_number++;
-            continue;
-        }
-
-        // 去掉行末的换行符
-        line[strcspn(line, "\n")] = 0;
-
-        // 解析键值对
-        char *key = strtok(line, "=");
-        char *value = strtok(NULL, "=");
-
-        if (key && value)
-        {
-            // 计算需要输出的空格数量
-            // int padding = MAX_KEY_LENGTH - strlen(key);
-
-            // 输出配置项，按照对齐要求输出
-            printf("%-*s: %s\n", MAX_KEY_LENGTH, key, value);
-        }
-
-        line_number++;
-    }
-
-    fclose(file);
-}
-
-// 打印版本信息
-void show_first_line(const char *filename)
-{
-    FILE *file = fopen(filename, "r");
-    if (file == NULL)
-    {
-        fprintf(stderr, "Failed to open config file: %s\n", filename);
-        return;
-    }
-
-    char line[256]; // 用于存储每一行的内容
-
-    // 读取第一行
-    if (fgets(line, sizeof(line), file))
-    {
-        // 去掉行末的换行符
-        line[strcspn(line, "\n")] = 0;
-
-        // 输出第一行的内容
-        printf("%s\n", line);
-    }
-    else
-    {
-        fprintf(stderr, "Failed to read the first line\n");
-    }
-
-    fclose(file);
-}
 
 // 读取文本中的SQL并执行
 void read_sql_from_file(const char *filename, GNCDB *db)
@@ -136,77 +81,77 @@ void read_sql_from_file(const char *filename, GNCDB *db)
     fclose(file);
 }
 
-#define CONFIG_FILE "config.ini"
+#define CONFIG_FILE "gncdb_config.ini"
 // 修改配置文件中的配置项
-void update_config_value(const char *key, const char *new_value)
-{
-    FILE *file = fopen(CONFIG_FILE, "r+");
-    if (file == NULL)
-    {
-        printf("Error opening file %s\n", CONFIG_FILE);
-        return;
-    }
+// void update_config_value(const char *key, const char *new_value)
+// {
+//     FILE *file = fopen(CONFIG_FILE, "r+");
+//     if (file == NULL)
+//     {
+//         printf("Error opening file %s\n", CONFIG_FILE);
+//         return;
+//     }
 
-    // 创建一个临时文件来存储更新后的内容
-    FILE *temp_file = tmpfile();
-    if (temp_file == NULL)
-    {
-        printf("Error creating temporary file.\n");
-        fclose(file);
-        return;
-    }
+//     // 创建一个临时文件来存储更新后的内容
+//     FILE *temp_file = tmpfile();
+//     if (temp_file == NULL)
+//     {
+//         printf("Error creating temporary file.\n");
+//         fclose(file);
+//         return;
+//     }
 
-    char line[256];
-    int found = 0;
+//     char line[256];
+//     int found = 0;
 
-    // 逐行读取文件并更新内容
-    while (fgets(line, sizeof(line), file) != NULL)
-    {
-        char *delimiter = strchr(line, '=');
-        if (delimiter)
-        {
-            *delimiter = '\0'; // 分隔符处截断，得到 key
-            if (strcmp(line, key) == 0)
-            {
-                // 找到匹配的 key，修改该行
-                fprintf(temp_file, "%s=%s\n", key, new_value);
-                found = 1;
-            }
-            else
-            {
-                // 未找到匹配的 key，写原始内容
-                fprintf(temp_file, "%s=%s", line, delimiter + 1);
-            }
-        }
-        else
-        {
-            // 如果这一行没有找到 '=', 直接写入
-            fprintf(temp_file, "%s", line);
-        }
-    }
+//     // 逐行读取文件并更新内容
+//     while (fgets(line, sizeof(line), file) != NULL)
+//     {
+//         char *delimiter = strchr(line, '=');
+//         if (delimiter)
+//         {
+//             *delimiter = '\0'; // 分隔符处截断，得到 key
+//             if (strcmp(line, key) == 0)
+//             {
+//                 // 找到匹配的 key，修改该行
+//                 fprintf(temp_file, "%s=%s\n", key, new_value);
+//                 found = 1;
+//             }
+//             else
+//             {
+//                 // 未找到匹配的 key，写原始内容
+//                 fprintf(temp_file, "%s=%s", line, delimiter + 1);
+//             }
+//         }
+//         else
+//         {
+//             // 如果这一行没有找到 '=', 直接写入
+//             fprintf(temp_file, "%s", line);
+//         }
+//     }
 
-    if (!found)
-    {
-        printf("Key '%s' not found in the config file.\n", key);
-    }
-    else
-    {
-        // printf("Updated %s to %s in config.ini\n", key, new_value);
-    }
+//     if (!found)
+//     {
+//         printf("Key '%s' not found in the config file.\n", key);
+//     }
+//     else
+//     {
+//         // printf("Updated %s to %s in gncdb_config.ini\n", key, new_value);
+//     }
 
-    // 清空原文件并将更新后的内容写回
-    freopen(CONFIG_FILE, "w", file);
-    fseek(temp_file, 0, SEEK_SET);
+//     // 清空原文件并将更新后的内容写回
+//     freopen(CONFIG_FILE, "w", file);
+//     fseek(temp_file, 0, SEEK_SET);
 
-    // 将临时文件内容写回原文件
-    while (fgets(line, sizeof(line), temp_file) != NULL)
-    {
-        fprintf(file, "%s", line);
-    }
+//     // 将临时文件内容写回原文件
+//     while (fgets(line, sizeof(line), temp_file) != NULL)
+//     {
+//         fprintf(file, "%s", line);
+//     }
 
-    fclose(file);
-    fclose(temp_file);
-}
+//     fclose(file);
+//     fclose(temp_file);
+// }
 int close_tag = 0;
 int open_database(char *fileName, GNCDB **db)
 {
@@ -312,7 +257,7 @@ void dot_command(char *command, GNCDB *db)
     else if (strncmp(command, ".show", 5) == 0)
     {
         // 处理 .show 命令的逻辑
-        show_config("config.ini");
+        show_config(config_absolute_path);
     }
     else if (strncmp(command, ".crnl", 5) == 0)
     {
@@ -504,7 +449,7 @@ void dot_command(char *command, GNCDB *db)
     else if (strncmp(command, ".version", 8) == 0)
     {
         // 处理 .version 命令的逻辑
-        show_first_line("config.ini");
+        show_first_line("gncdb_config.ini");
     }
     else if (strncmp(command, ".headers", 8) == 0)
     {
