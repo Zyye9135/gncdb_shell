@@ -1,0 +1,10 @@
+Architecture: amd64
+Depends: libreadline8
+Description: GNCDB Shell - A database shell tool
+Maintainer: Zyy <zyye9135@mail.nwpu.edu.cn>
+Package: gncdb-shell
+Priority: optional
+Section: devel
+Version: 1.0.1
+Installed-Size: 795
+

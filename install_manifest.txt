@@ -1,0 +1,3 @@
+/usr/bin/gncdb_shell
+/usr/share/doc/gncdb-shell/README.md
+/usr/etc/gncdb-shell/config.ini

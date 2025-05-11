@@ -8,6 +8,19 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <time.h>
+#include <sys/stat.h>
+
+// 默认配置
+const char *DEFAULT_CONFIG = 
+    "version=1.0.0\n"
+    "echo=off\n"
+    "headers=on\n"
+    "output=stdout\n"
+    "colseparator=|\n"
+    "rowseparator=\\n\n"
+    "columnWidth=20\n"
+    "timer=off\n"
+    "crnl=off\n";
 
 void dot_databases(GNCDB *db);
 
@@ -17,6 +30,7 @@ double get_time_in_seconds();
 // 全局变量，数据库文件信息
 char *fileName = "";
 char *filePath = "";
+char configPath[1024] = {0}; // 添加配置文件路径变量
 
 // 全局变量，控制打印要求
 int ifHeaders = 0;
@@ -80,11 +94,50 @@ void cleanup_temp_dbs() {
     }
 }
 
+// 查找配置文件
+void find_config_file() {
+    // 1. 首先检查当前目录
+    if (access("config.ini", F_OK) == 0) {
+        strcpy(configPath, "config.ini");
+        return;
+    }
+    
+    // 2. 检查用户主目录
+    char *home = getenv("HOME");
+    if (home) {
+        snprintf(configPath, sizeof(configPath), "%s/.gncdb/config.ini", home);
+        if (access(configPath, F_OK) == 0) {
+            return;
+        }
+    }
+    
+    // 3. 检查系统配置目录
+    strcpy(configPath, "/etc/gncdb-shell/config.ini");
+    if (access(configPath, F_OK) == 0) {
+        return;
+    }
+    
+    // 4. 如果都找不到，使用当前目录
+    strcpy(configPath, "config.ini");
+}
+
 int main()
 {
     int rc;
     char sql[4096] = {0};   // 存储完整的SQL命令
     char input[1024] = {0}; // 每次输入的缓冲区
+    
+    // 检测并创建 "log" 文件夹
+    struct stat statbuf;
+    if (stat("log", &statbuf) != 0) { // 检查 "log" 文件夹是否存在
+        if (mkdir("log", 0755) != 0) { // 如果不存在，则创建文件夹
+            perror("log:mkdir failed");
+            return 1; // 返回错误代码
+        }
+    }
+    
+    // 查找配置文件
+    find_config_file();
     
     // 生成新的临时数据库名
     fileName = generate_temp_db_name();
@@ -97,7 +150,7 @@ int main()
     prompt = strdup("AxDB> ");
 
     // 读取配置文件
-    read_config("config.ini");
+    read_config(configPath);
 
     // 打开数据库
     rc = GNCDB_open(&db, fileName);
@@ -171,7 +224,7 @@ int main()
             // 执行 SQL 命令
             set_print_column_names(ifHeaders);
             headerPrinted = 0;
-            read_config("config.ini");
+            read_config(configPath);
             // 记录开始时间
             // 去除 SQL 开头的空格
             char *trimmed_sql = sql;
@@ -253,16 +306,89 @@ void read_config(const char *configname)
     FILE *file = fopen(configname, "r");
     if (file == NULL)
     {
-        perror("Unable to open config file");
+        // 如果文件不存在，使用默认配置
+        char *line = strtok(strdup(DEFAULT_CONFIG), "\n");
+        int line_number = 0;
+        
+        while (line != NULL) {
+            line_number++;
+            
+            // 处理每一行配置
+            if (line_number == 2) { // echo
+                if (strcmp(line, "echo=off") == 0) {
+                    ifEcho = 0;
+                } else if (strcmp(line, "echo=on") == 0) {
+                    ifEcho = 1;
+                }
+            }
+            else if (line_number == 3) { // headers
+                if (strcmp(line, "headers=off") == 0) {
+                    ifHeaders = 0;
+                } else if (strcmp(line, "headers=on") == 0) {
+                    ifHeaders = 1;
+                }
+            }
+            else if (line_number == 5) { // output
+                char *outputValue = strstr(line, "=") + 1;
+                if (strcmp(outputValue, "stdout") == 0) {
+                    outputFile = NULL;
+                    ifExcel = 0;
+                } else if (strcmp(outputValue, "excel") == 0) {
+                    outputFile = fopen("output.csv", "w");
+                    ifExcel = 1;
+                } else {
+                    outputFile = fopen(outputValue, "w");
+                    ifExcel = 1;
+                }
+            }
+            else if (line_number == 6) { // colseparator
+                char *colSeparatorValue = strstr(line, "=") + 1;
+                if (strcmp(colSeparatorValue, "\\n") == 0) {
+                    colSeparator = ifCrnl ? "\r\n" : "\n";
+                } else if (strcmp(colSeparatorValue, "\\t") == 0) {
+                    colSeparator = "\t";
+                } else {
+                    colSeparator = strdup(colSeparatorValue);
+                }
+            }
+            else if (line_number == 7) { // rowseparator
+                char *rowSeparatorValue = strstr(line, "=") + 1;
+                if (strcmp(rowSeparatorValue, "\\n") == 0) {
+                    rowSeparator = ifCrnl ? "\r\n" : "\n";
+                } else if (strcmp(rowSeparatorValue, "\\t") == 0) {
+                    rowSeparator = "\t";
+                } else {
+                    rowSeparator = strdup(rowSeparatorValue);
+                }
+            }
+            else if (line_number == 8) { // columnWidth
+                char *columnWidthValue = strstr(line, "=") + 1;
+                columnWidth = atoi(columnWidthValue);
+            }
+            else if (line_number == 9) { // timer
+                if (strcmp(line, "timer=off") == 0) {
+                    ifTimer = 0;
+                } else if (strcmp(line, "timer=on") == 0) {
+                    ifTimer = 1;
+                }
+            }
+            else if (line_number == 10) { // crnl
+                if (strcmp(line, "crnl=off") == 0) {
+                    ifCrnl = 0;
+                } else if (strcmp(line, "crnl=on") == 0) {
+                    ifCrnl = 1;
+                }
+            }
+            
+            line = strtok(NULL, "\n");
+        }
         return;
     }
 
-    char line[256]; // 用于存储每行内容
+    // 如果文件存在，按原来的方式读取
+    char line[256];
     int line_number = 0;
-
-    // 逐行读取配置文件
-    while (fgets(line, sizeof(line), file))
-    {
+    while (fgets(line, sizeof(line), file)) {
         line_number++;
 
         // 当读取到第二行时，解析echo

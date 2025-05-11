@@ -1,0 +1,1 @@
+/usr/bin/cc  -Wall -g -fdiagnostics-color=always CMakeFiles/main.dir/src/callback.c.o CMakeFiles/main.dir/src/help.c.o CMakeFiles/main.dir/src/main.c.o CMakeFiles/main.dir/src/utils.c.o -o main  gncdblib/lib/libgncdb.a -lm -lreadline 

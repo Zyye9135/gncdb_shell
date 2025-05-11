@@ -6,7 +6,7 @@
             "name": "Debug",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/main",  // 可执行文件路径
+            "program": "${workspaceFolder}/gncdb_shell",  // 可执行文件路径
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -20,7 +20,7 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build with Make"
+            "preLaunchTask": "Build with CMake"
         }
     ]
 }

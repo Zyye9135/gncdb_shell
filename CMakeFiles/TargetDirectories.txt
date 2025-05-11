@@ -1,0 +1,9 @@
+/home/zyy/桌面/gncdb_shell/CMakeFiles/gncdb_shell.dir
+/home/zyy/桌面/gncdb_shell/CMakeFiles/package.dir
+/home/zyy/桌面/gncdb_shell/CMakeFiles/package_source.dir
+/home/zyy/桌面/gncdb_shell/CMakeFiles/edit_cache.dir
+/home/zyy/桌面/gncdb_shell/CMakeFiles/rebuild_cache.dir
+/home/zyy/桌面/gncdb_shell/CMakeFiles/list_install_components.dir
+/home/zyy/桌面/gncdb_shell/CMakeFiles/install.dir
+/home/zyy/桌面/gncdb_shell/CMakeFiles/install/local.dir
+/home/zyy/桌面/gncdb_shell/CMakeFiles/install/strip.dir

@@ -2,14 +2,24 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Build with Make",
+            "label": "Build with CMake",
             "type": "shell",
-            "command": "make",
+            "command": "cmake . && make",
             "group": "build",
             "problemMatcher": [
                 "$gcc"
             ],
-            "detail": "Generated task to build with Make"
+            "detail": "Generated task to build with CMake"
+        },
+        {
+            "label": "Clean with CMake",
+            "type": "shell",
+            "command": "make clean",
+            "group": "build",
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "detail": "Generated task to clean with CMake"
         },
         {
             "type": "cppbuild",
