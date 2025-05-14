@@ -44,11 +44,15 @@ int columnWidth = 15;
 char opDir[1024]; // 运行中的目录
 char *prompt;
 char *onceOption = NULL;
-char *colSeparator = "|";  // 列分隔符，默认为制表符
-char *rowSeparator = "\n"; // 行分隔符，默认为换行符
+char *colSeparator = "|";  // 默认列分隔符，会被配置文件覆盖
+char *rowSeparator = "\n"; // 默认行分隔符，会被配置文件覆盖
 extern int headerPrinted;
 extern FILE *outputFile;
 GNCDB *db = NULL;
+extern int onceEnabled;  // 添加外部引用声明
+extern FILE *onceFile;   // 添加外部引用声明
+extern int enable_once_output(const char *fileName);
+extern void disable_once_output();
 
 // 打印配置信息
 void show_config(const char *filename)
@@ -145,6 +149,7 @@ void cleanup_temp_dbs() {
     }
     
     while ((entry = readdir(dir)) != NULL) {
+        // 删除临时数据库文件
         if (strstr(entry->d_name, "temp_") == entry->d_name && 
             strstr(entry->d_name, ".dat") != NULL) {
             // 跳过当前使用的临时数据库
@@ -152,6 +157,7 @@ void cleanup_temp_dbs() {
                 continue;
             }
             // 删除其他临时数据库
+            printf("Removing old temporary database: %s\n", entry->d_name);
             remove(entry->d_name);
         }
     }
@@ -181,20 +187,50 @@ void init_config_file() {
             perror("Error creating config file");
             return;
         }
-        
-        // 写入默认配置
-        fprintf(file, "[output]\n");
-        fprintf(file, "format=stdout\n");
-        fprintf(file, "headers=1\n");
-        fprintf(file, "echo=0\n");
-        fprintf(file, "trace=0\n");
-        fprintf(file, "excel=0\n");
-        fprintf(file, "change=0\n");
+
+        fprintf(file, "version=1.0.0\n");
+        fprintf(file, "echo=on\n");
+        fprintf(file, "headers=on\n");
+        fprintf(file, "output=stdout\n");
+        fprintf(file, "colseparator=\\t\n");   // 写入字符串 \t 而不是实际的制表符
+        fprintf(file, "rowseparator=\\n\n");   // 写入字符串 \n 而不是实际的换行符
+        fprintf(file, "columnWidth=20\n");
+        fprintf(file, "timer=off\n");
+        fprintf(file, "crnl=off\n");
         
         fclose(file);
         printf("Created default config file at: %s\n", config_absolute_path);
     }
 }
+
+// 处理转义字符的函数
+char* parse_escape_chars(const char* str) {
+    if (str == NULL) return NULL;
+    
+    int len = strlen(str);
+    char* result = malloc(len + 1);
+    if (!result) return NULL;
+    
+    int i, j;
+    for (i = 0, j = 0; i < len; i++, j++) {
+        if (str[i] == '\\' && i + 1 < len) {
+            switch (str[i+1]) {
+                case 'n': result[j] = '\n'; i++; break;
+                case 't': result[j] = '\t'; i++; break;
+                case 'r': result[j] = '\r'; i++; break;
+                case '\\': result[j] = '\\'; i++; break;
+                default: result[j] = str[i]; break;
+            }
+        } else {
+            result[j] = str[i];
+        }
+    }
+    result[j] = '\0';
+    return result;
+}
+
+// 声明日志清理函数
+void cleanup_log_files();
 
 int main()
 {
@@ -217,8 +253,9 @@ int main()
     // 生成新的临时数据库名
     fileName = generate_temp_db_name();
     
-    // 清理旧的临时数据库
+    // 清理旧的临时数据库和日志文件
     cleanup_temp_dbs();
+    cleanup_log_files();
     
     update_config_value("output", "stdout");
     // 初始化提示符
@@ -278,6 +315,20 @@ int main()
                     printf("Error: Unable to allocate memory for new prompt.\n");
                 }
                 continue; // 跳过 SQL 处理，直接继续下一次输入
+            }
+            else if (strncmp(input, ".once", 5) == 0)
+            {
+                // 处理 .once 命令的逻辑
+                if (strlen(input) > 6)
+                {
+                    char *fileName = input + 6;
+                    enable_once_output(fileName);
+                }
+                else
+                {
+                    printf("Error: .once requires a filename\n");
+                }
+                continue;
             }
             else
             {
@@ -343,6 +394,14 @@ int main()
                 ifExcel = 0;
                 update_config_value("output", "stdout");
             }
+            
+            // 如果启用了once模式，执行完SQL后禁用
+            if (onceEnabled)
+            {
+                disable_once_output();
+                printf("Once output completed and disabled.\n");
+            }
+            
             set_output_excel(0);
             // 记录结束时间
             double end_time = get_time_in_seconds();
@@ -381,6 +440,8 @@ void read_config(const char *configPath) {
     if (file == NULL) {
         perror("Error opening config file");
         return;
+    } else {
+        //printf("Config file opened successfully: %s\n", configPath);
     }
     
     char line[256];
@@ -402,25 +463,77 @@ void read_config(const char *configPath) {
             continue;
         }
         
-        // 处理键值对
-        if (sscanf(line, "%[^=]=%s", key, value) == 2) {
-            if (strcmp(section, "output") == 0) {
-                if (strcmp(key, "format") == 0) {
-                    if (strcmp(value, "excel") == 0) {
-                        set_output_excel(1);
-                    } else {
-                        set_output_excel(0);
-                    }
-                } else if (strcmp(key, "headers") == 0) {
-                    set_print_column_names(atoi(value));
-                } else if (strcmp(key, "echo") == 0) {
-                    ifEcho = atoi(value);
-                } else if (strcmp(key, "trace") == 0) {
-                    ifTrace = atoi(value);
-                } else if (strcmp(key, "excel") == 0) {
-                    ifExcel = atoi(value);
-                } else if (strcmp(key, "change") == 0) {
-                    ifChange = atoi(value);
+        // 处理键值对 - 支持=和:作为分隔符
+        char *separator = strchr(line, '=');
+        if (!separator) {
+            separator = strchr(line, ':');
+        }
+        
+        if (separator) {
+            // 提取键（去除尾部空格）
+            int key_len = separator - line;
+            strncpy(key, line, key_len);
+            key[key_len] = '\0';
+            
+            // 去除键尾部的空格
+            char *key_end = key + key_len - 1;
+            while (key_end >= key && isspace((unsigned char)*key_end)) {
+                *key_end = '\0';
+                key_end--;
+            }
+            
+            // 提取值（去除前导空格）
+            char *value_start = separator + 1;
+            while (*value_start && isspace((unsigned char)*value_start)) {
+                value_start++;
+            }
+            strcpy(value, value_start);
+            
+            // 处理配置
+            if (strcmp(key, "colseparator") == 0) {
+                char *new_sep = parse_escape_chars(value);
+                if (new_sep) {
+                    colSeparator = new_sep;
+                    // printf("Column separator set to: ");
+                    // for (int i = 0; i < strlen(new_sep); i++) {
+                    //     if (new_sep[i] == '\t') printf("\\t");
+                    //     else if (new_sep[i] == '\n') printf("\\n");
+                    //     else printf("%c", new_sep[i]);
+                    // }
+                    // printf("\n");
+                }
+            } else if (strcmp(key, "rowseparator") == 0) {
+                char *new_sep = parse_escape_chars(value);
+                if (new_sep) {
+                    rowSeparator = new_sep;
+                    // //printf("Row separator set to: ");
+                    // for (int i = 0; i < strlen(new_sep); i++) {
+                    //     if (new_sep[i] == '\t') printf("\\t");
+                    //     else if (new_sep[i] == '\n') printf("\\n");
+                    //     else printf("%c", new_sep[i]);
+                    // }
+                    // printf("\n");
+                }
+            } else if (strcmp(key, "columnWidth") == 0) {
+                columnWidth = atoi(value);
+                set_column_width(columnWidth);
+            } else if (strcmp(key, "headers") == 0) {
+                if (strcmp(value, "on") == 0) {
+                    ifHeaders = 1;
+                    set_print_column_names(1);
+                } else if (strcmp(value, "off") == 0) {
+                    ifHeaders = 0;
+                    set_print_column_names(0);
+                }
+            } else if (strcmp(key, "echo") == 0) {
+                ifEcho = (strcmp(value, "on") == 0) ? 1 : 0;
+            } else if (strcmp(key, "timer") == 0) {
+                ifTimer = (strcmp(value, "on") == 0) ? 1 : 0;
+            } else if (strcmp(key, "excel") == 0) {
+                if (strcmp(value, "on") == 0) {
+                    set_output_excel(1);
+                } else {
+                    set_output_excel(0);
                 }
             }
         }
@@ -444,20 +557,50 @@ void update_config_value(const char *key, const char *value) {
         strcat(content, line);
     }
     
+    // 特殊处理转义字符
+    char *search_key = NULL;
+    char *display_value = NULL;
+    
+    // 如果是分隔符相关的键，需要特殊处理
+    if (strcmp(key, "colseparator") == 0 || strcmp(key, "rowseparator") == 0) {
+        if (strcmp(value, "\t") == 0) {
+            display_value = "\\t";
+        } else if (strcmp(value, "\n") == 0) {
+            display_value = "\\n";
+        } else {
+            display_value = (char*)value;
+        }
+    } else {
+        display_value = (char*)value;
+    }
+    
     // 查找并替换键值对
     char *pos = strstr(content, key);
     if (pos != NULL) {
         // 找到键，替换值
-        char *value_start = strchr(pos, '=');
+        char *value_start = NULL;
+        char *equal_sign = strchr(pos, '=');
+        char *colon_sign = strchr(pos, ':');
+        
+        if (equal_sign != NULL && (colon_sign == NULL || equal_sign < colon_sign)) {
+            value_start = equal_sign + 1;
+        } else if (colon_sign != NULL) {
+            value_start = colon_sign + 1;
+        }
+        
         if (value_start != NULL) {
-            value_start++; // 移动到值的位置
+            // 跳过前导空格
+            while (*value_start == ' ' || *value_start == '\t') {
+                value_start++;
+            }
+            
             char *value_end = strchr(value_start, '\n');
             if (value_end != NULL) {
                 // 替换值
-                int value_len = strlen(value);
+                int value_len = strlen(display_value);
                 int old_value_len = value_end - value_start;
                 memmove(value_start + value_len, value_end, strlen(value_end) + 1);
-                memcpy(value_start, value, value_len);
+                memcpy(value_start, display_value, value_len);
             }
         }
     }
@@ -474,4 +617,67 @@ double get_time_in_seconds()
     struct timeval tv;
     gettimeofday(&tv, NULL);
     return tv.tv_sec + tv.tv_usec / 1000000.0;
+}
+
+// 清理日志文件
+void cleanup_log_files() {
+    DIR *dir;
+    struct dirent *entry;
+    
+    // 打开当前目录
+    dir = opendir(".");
+    if (dir == NULL) {
+        return;
+    }
+    
+    printf("Cleaning up old log files...\n");
+    
+    // 遍历目录中的文件
+    while ((entry = readdir(dir)) != NULL) {
+        // 删除所有log_temp_开头的文件
+        if (strstr(entry->d_name, "log_temp_") == entry->d_name) {
+            printf("Removing old log file: %s\n", entry->d_name);
+            if (remove(entry->d_name) == 0) {
+                // 成功删除
+            } else {
+                perror("Failed to remove log file");
+            }
+        }
+    }
+    
+    closedir(dir);
+    
+    // 检查是否有log目录
+    dir = opendir("log");
+    if (dir == NULL) {
+        return;
+    }
+    
+    // 遍历log目录中的文件
+    while ((entry = readdir(dir)) != NULL) {
+        // 跳过"."和".."目录
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+            continue;
+        }
+        
+        // 构建完整的文件路径
+        char filepath[1024];
+        snprintf(filepath, sizeof(filepath), "log/%s", entry->d_name);
+        
+        // 获取文件状态
+        struct stat st;
+        if (stat(filepath, &st) == 0) {
+            // 获取当前时间
+            time_t now = time(NULL);
+            // 如果文件超过30天未修改，则删除
+            if (now - st.st_mtime > 30 * 24 * 60 * 60) {
+                printf("Removing old log file: %s\n", filepath);
+                if (remove(filepath) != 0) {
+                    perror("Failed to remove old log file");
+                }
+            }
+        }
+    }
+    
+    closedir(dir);
 }

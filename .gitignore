@@ -12,3 +12,8 @@ _CPack_Packages/
 测试语句
 *.cmake
 *.deb
+*.ini
+CMakeFiles/
+*.csv
+.gitignore
+Makefile

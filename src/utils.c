@@ -224,7 +224,6 @@ void dot_command(char *command, GNCDB *db)
     }
     else if (strncmp(command, ".schema", 7) == 0)
     {
-        // 处理 .tables 命令，执行 select sql from schema;
         if (db == NULL)
         {
             printf("Error: No database is currently open.\n");
@@ -343,18 +342,75 @@ void dot_command(char *command, GNCDB *db)
     {
         // 处理 .separator 命令的逻辑
         char *commandCopy = strdup(command + 11); // 跳过 ".separator "
-        char *colseparator = strtok(commandCopy, " ");
-        char *rowseparator = strtok(NULL, " ");
-
-        if (colseparator)
-        {
-            update_config_value("colseparator", colseparator);
+        if (commandCopy == NULL) {
+            printf("Error: Memory allocation failed\n");
+            return;
         }
-        if (rowseparator)
-        {
-            update_config_value("rowseparator", rowseparator);
+        
+        // 去除前导空格
+        char *ptr = commandCopy;
+        while (*ptr == ' ' || *ptr == '\t') ptr++;
+        
+        char *colseparator = NULL;
+        char *rowseparator = NULL;
+        
+        // 解析第一个参数（列分隔符）
+        if (*ptr != '\0') {
+            colseparator = ptr;
+            
+            // 查找下一个空格（如果有）
+            while (*ptr != '\0' && *ptr != ' ' && *ptr != '\t') ptr++;
+            
+            // 如果找到空格，将其设置为字符串结束并移动到下一个字符
+            if (*ptr != '\0') {
+                *ptr = '\0';
+                ptr++;
+                
+                // 跳过连续的空格
+                while (*ptr == ' ' || *ptr == '\t') ptr++;
+                
+                // 如果还有内容，则作为行分隔符
+                if (*ptr != '\0') {
+                    rowseparator = ptr;
+                }
+            }
         }
-
+        
+        // 处理特殊的转义序列
+        if (colseparator) {
+            // 检查是否有转义序列
+            if (strcmp(colseparator, "\\t") == 0) {
+                update_config_value("colseparator", "\\t");
+                colSeparator = "\t";
+                printf("Column separator set to tab\n");
+            } else if (strcmp(colseparator, "\\n") == 0) {
+                update_config_value("colseparator", "\\n");
+                colSeparator = "\n";
+                printf("Column separator set to newline\n");
+            } else {
+                update_config_value("colseparator", colseparator);
+                colSeparator = strdup(colseparator);
+                printf("Column separator set to '%s'\n", colseparator);
+            }
+        }
+        
+        if (rowseparator) {
+            // 检查是否有转义序列
+            if (strcmp(rowseparator, "\\t") == 0) {
+                update_config_value("rowseparator", "\\t");
+                rowSeparator = "\t";
+                printf("Row separator set to tab\n");
+            } else if (strcmp(rowseparator, "\\n") == 0) {
+                update_config_value("rowseparator", "\\n");
+                rowSeparator = "\n";
+                printf("Row separator set to newline\n");
+            } else {
+                update_config_value("rowseparator", rowseparator);
+                rowSeparator = strdup(rowseparator);
+                printf("Row separator set to '%s'\n", rowseparator);
+            }
+        }
+        
         free(commandCopy);
     }
     else if (strncmp(command, ".databases", 10) == 0)
@@ -365,12 +421,32 @@ void dot_command(char *command, GNCDB *db)
     else if (strncmp(command, ".once", 5) == 0)
     {
         // 处理 .once 命令的逻辑
-        onceOption = command + 6;
+        if (strlen(command) > 6)
+        {
+            char *fileName = command + 6;
+            // 去除可能的前导空格
+            while (*fileName == ' ')
+            {
+                fileName++;
+            }
+            if (*fileName != '\0')
+            {
+                enable_once_output(fileName);
+            }
+            else
+            {
+                printf("Error: .once requires a filename\n");
+            }
+        }
+        else
+        {
+            printf("Error: .once requires a filename\n");
+        }
     }
     else if (strncmp(command, ".excel", 6) == 0)
     {
         // 处理 .excel 命令的逻辑
-        // set_output_excel(1);
+        set_output_excel(1);
         update_config_value("output", "excel");
     }
     else if (strncmp(command, ".output", 7) == 0)
@@ -669,7 +745,7 @@ int dot_clone(const char *command, int g)
     }
     if (token == NULL && g == 2)
     {
-        printf(".save missing FILENAME argument on .clone\n");
+        printf(".save missing FILENAME argument on .save\n");
         free(commandCopy);
         return -1;
     }
@@ -817,3 +893,4 @@ void handle_indexes_command(const char *command, GNCDB *db) {
     printColumnNames = tempHeaders;
     free(commandCopy);
 }
+

@@ -83,10 +83,24 @@ CMakeFiles/gncdb_shell.dir/src/callback.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/gncdb_shell.dir/src/callback.c.s"
 	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zyy/桌面/gncdb_shell/src/callback.c -o CMakeFiles/gncdb_shell.dir/src/callback.c.s
 
+CMakeFiles/gncdb_shell.dir/src/callback_echo_off.c.o: CMakeFiles/gncdb_shell.dir/flags.make
+CMakeFiles/gncdb_shell.dir/src/callback_echo_off.c.o: src/callback_echo_off.c
+CMakeFiles/gncdb_shell.dir/src/callback_echo_off.c.o: CMakeFiles/gncdb_shell.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zyy/桌面/gncdb_shell/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building C object CMakeFiles/gncdb_shell.dir/src/callback_echo_off.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/gncdb_shell.dir/src/callback_echo_off.c.o -MF CMakeFiles/gncdb_shell.dir/src/callback_echo_off.c.o.d -o CMakeFiles/gncdb_shell.dir/src/callback_echo_off.c.o -c /home/zyy/桌面/gncdb_shell/src/callback_echo_off.c
+
+CMakeFiles/gncdb_shell.dir/src/callback_echo_off.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/gncdb_shell.dir/src/callback_echo_off.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/zyy/桌面/gncdb_shell/src/callback_echo_off.c > CMakeFiles/gncdb_shell.dir/src/callback_echo_off.c.i
+
+CMakeFiles/gncdb_shell.dir/src/callback_echo_off.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/gncdb_shell.dir/src/callback_echo_off.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/zyy/桌面/gncdb_shell/src/callback_echo_off.c -o CMakeFiles/gncdb_shell.dir/src/callback_echo_off.c.s
+
 CMakeFiles/gncdb_shell.dir/src/help.c.o: CMakeFiles/gncdb_shell.dir/flags.make
 CMakeFiles/gncdb_shell.dir/src/help.c.o: src/help.c
 CMakeFiles/gncdb_shell.dir/src/help.c.o: CMakeFiles/gncdb_shell.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zyy/桌面/gncdb_shell/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building C object CMakeFiles/gncdb_shell.dir/src/help.c.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zyy/桌面/gncdb_shell/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building C object CMakeFiles/gncdb_shell.dir/src/help.c.o"
 	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/gncdb_shell.dir/src/help.c.o -MF CMakeFiles/gncdb_shell.dir/src/help.c.o.d -o CMakeFiles/gncdb_shell.dir/src/help.c.o -c /home/zyy/桌面/gncdb_shell/src/help.c
 
 CMakeFiles/gncdb_shell.dir/src/help.c.i: cmake_force
@@ -100,7 +114,7 @@ CMakeFiles/gncdb_shell.dir/src/help.c.s: cmake_force
 CMakeFiles/gncdb_shell.dir/src/main.c.o: CMakeFiles/gncdb_shell.dir/flags.make
 CMakeFiles/gncdb_shell.dir/src/main.c.o: src/main.c
 CMakeFiles/gncdb_shell.dir/src/main.c.o: CMakeFiles/gncdb_shell.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zyy/桌面/gncdb_shell/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building C object CMakeFiles/gncdb_shell.dir/src/main.c.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zyy/桌面/gncdb_shell/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building C object CMakeFiles/gncdb_shell.dir/src/main.c.o"
 	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/gncdb_shell.dir/src/main.c.o -MF CMakeFiles/gncdb_shell.dir/src/main.c.o.d -o CMakeFiles/gncdb_shell.dir/src/main.c.o -c /home/zyy/桌面/gncdb_shell/src/main.c
 
 CMakeFiles/gncdb_shell.dir/src/main.c.i: cmake_force
@@ -114,7 +128,7 @@ CMakeFiles/gncdb_shell.dir/src/main.c.s: cmake_force
 CMakeFiles/gncdb_shell.dir/src/utils.c.o: CMakeFiles/gncdb_shell.dir/flags.make
 CMakeFiles/gncdb_shell.dir/src/utils.c.o: src/utils.c
 CMakeFiles/gncdb_shell.dir/src/utils.c.o: CMakeFiles/gncdb_shell.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zyy/桌面/gncdb_shell/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building C object CMakeFiles/gncdb_shell.dir/src/utils.c.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zyy/桌面/gncdb_shell/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building C object CMakeFiles/gncdb_shell.dir/src/utils.c.o"
 	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/gncdb_shell.dir/src/utils.c.o -MF CMakeFiles/gncdb_shell.dir/src/utils.c.o.d -o CMakeFiles/gncdb_shell.dir/src/utils.c.o -c /home/zyy/桌面/gncdb_shell/src/utils.c
 
 CMakeFiles/gncdb_shell.dir/src/utils.c.i: cmake_force
@@ -128,6 +142,7 @@ CMakeFiles/gncdb_shell.dir/src/utils.c.s: cmake_force
 # Object files for target gncdb_shell
 gncdb_shell_OBJECTS = \
 "CMakeFiles/gncdb_shell.dir/src/callback.c.o" \
+"CMakeFiles/gncdb_shell.dir/src/callback_echo_off.c.o" \
 "CMakeFiles/gncdb_shell.dir/src/help.c.o" \
 "CMakeFiles/gncdb_shell.dir/src/main.c.o" \
 "CMakeFiles/gncdb_shell.dir/src/utils.c.o"
@@ -136,13 +151,14 @@ gncdb_shell_OBJECTS = \
 gncdb_shell_EXTERNAL_OBJECTS =
 
 gncdb_shell: CMakeFiles/gncdb_shell.dir/src/callback.c.o
+gncdb_shell: CMakeFiles/gncdb_shell.dir/src/callback_echo_off.c.o
 gncdb_shell: CMakeFiles/gncdb_shell.dir/src/help.c.o
 gncdb_shell: CMakeFiles/gncdb_shell.dir/src/main.c.o
 gncdb_shell: CMakeFiles/gncdb_shell.dir/src/utils.c.o
 gncdb_shell: CMakeFiles/gncdb_shell.dir/build.make
 gncdb_shell: gncdblib/lib/libgncdb.a
 gncdb_shell: CMakeFiles/gncdb_shell.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/zyy/桌面/gncdb_shell/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Linking C executable gncdb_shell"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/zyy/桌面/gncdb_shell/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Linking C executable gncdb_shell"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/gncdb_shell.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

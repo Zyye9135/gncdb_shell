@@ -9,6 +9,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/home/zyy/桌面/gncdb_shell/src/callback.c" "CMakeFiles/gncdb_shell.dir/src/callback.c.o" "gcc" "CMakeFiles/gncdb_shell.dir/src/callback.c.o.d"
+  "/home/zyy/桌面/gncdb_shell/src/callback_echo_off.c" "CMakeFiles/gncdb_shell.dir/src/callback_echo_off.c.o" "gcc" "CMakeFiles/gncdb_shell.dir/src/callback_echo_off.c.o.d"
   "/home/zyy/桌面/gncdb_shell/src/help.c" "CMakeFiles/gncdb_shell.dir/src/help.c.o" "gcc" "CMakeFiles/gncdb_shell.dir/src/help.c.o.d"
   "/home/zyy/桌面/gncdb_shell/src/main.c" "CMakeFiles/gncdb_shell.dir/src/main.c.o" "gcc" "CMakeFiles/gncdb_shell.dir/src/main.c.o.d"
   "/home/zyy/桌面/gncdb_shell/src/utils.c" "CMakeFiles/gncdb_shell.dir/src/utils.c.o" "gcc" "CMakeFiles/gncdb_shell.dir/src/utils.c.o.d"

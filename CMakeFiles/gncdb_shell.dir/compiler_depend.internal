@@ -106,6 +106,10 @@ CMakeFiles/gncdb_shell.dir/src/callback.c.o
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdbool.h
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h
 
+CMakeFiles/gncdb_shell.dir/src/callback_echo_off.c.o
+ /home/zyy/桌面/gncdb_shell/src/callback_echo_off.c
+ /usr/include/stdc-predef.h
+
 CMakeFiles/gncdb_shell.dir/src/help.c.o
  /home/zyy/桌面/gncdb_shell/src/help.c
  /usr/include/features-time64.h
